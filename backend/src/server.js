@@ -17,8 +17,11 @@ app.use("/api/auth", authRoute)
 app.use("/api/messages", messageRoute)
 
 
+const startServer = async () => {
+    await connectDB();
+    app.listen(Port, () => {
+        console.log(`Server is Running on Port ${Port}`);
+    });
+};
 
-app.listen(Port, () => {
-    console.log(`Server is Running on Port ${Port}`);
-    connectDB()
-})
+startServer();

@@ -1,6 +1,6 @@
 
 # Project Title 
-## HAMA Chats ( Real Time chat App )
+## HAMA Chats ( Real-Time chat App )
 
 This Application use for Sending & Recieving the Messages to the one user to 2nd user ; 
 

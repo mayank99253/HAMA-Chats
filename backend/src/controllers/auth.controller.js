@@ -16,8 +16,8 @@ export const signup = async (req,res) => {
             return res.status(400).json({message:"Password is Too Small"});
         }
 
-        const emailRogex = /^[^\s@]+@[^\s@]+\.[^\s@]+s/;
-        if(emailRogex.test(email)){
+        const emailRegex = /^[^\s@]@[^\s@]\.[^\s@]$/;
+        if(!emailRegex.test(email)){
             return res.status(400).json({message:"Invalid Email Format"})
         }
 
@@ -34,21 +34,21 @@ export const signup = async (req,res) => {
         })
 
         if(newUser){
-            generateToken(newUser._id,res)
             await newUser.save();
+        generateToken(newUser._id,res);
 
-            res.status(201).json({
-                _id:newUser._id,
-                email:newUser.email,
-                fullName:newUser.fullName,
-                profilepic:newUser.profilepic
-            })
+        return res.status(201).json({
+            _id:newUser._id,
+            email:newUser.email,
+            fullName:newUser.fullName,
+            profilepic:newUser.profilepic
+        });
         }else{
             res.status(400).json({message:"Invalid User Data"})
         }
 
     } catch (error) {
         console.error("Error in Sign Up Controller" , error);
-        res.status(500).json({message:"Internal Server Error"})
+        return res.status(500).json({message:"Internal Server Error"})
     }
 }
