@@ -1,5 +1,6 @@
 
-# Project Title = Real Time chat App
+# Project Title 
+## HAMA Chats ( Real Time chat App )
 
 This Application use for Sending & Recieving the Messages to the one user to 2nd user ; 
 
@@ -171,3 +172,87 @@ export default router;
 ```
 
 ## Create Repository and Push Your Code
+Use following this code 
+```base
+git init
+git add .
+git commit -m "fisrt commit"
+git remote add origin git_hub_repo_link
+git branch -M main
+git push -u origin main
+```
+
+## Create Database and Setup It 
+ I use Mongo DB Atlas and I setUp it 
+ Just Copy and paste the URL of the Mongo DB Url in .env file
+
+ Sorry i can not explain the Setup 
+
+## Now Create the Lib Folder is called Library Folder -
+
+Create db.js file for the connection of the Database -
+
+Follow the code-
+ ```javascript
+ import mongoose from 'mongoose'
+
+export const connectDB = async () => {
+    try {
+        const conn = await mongoose.connect(process.env.MONGO_URI);
+        console.log("MONGO Database is Connected",conn.connection.host);
+    } catch (error) {
+        console.error("Database Connection failed",error);
+        process.exit(1); // 1 code is means that Fails , 0 means Sucess
+    }
+}
+```
+
+import the function in Server.js file and call it in app.listen;
+like this - 
+```javascript
+import { connectDB } from './lib/db.js';
+
+app.listen(Port, () => {
+    console.log(`Server is Running on Port ${Port}`);
+    connectDB()
+})
+```
+
+## let's implement the Authentication
+
+Make controllers folder and create a File name as auth.contorller.js for 
+
+start from Signup Controller
+
+Create Model Folder and create A file named as User.js 
+and keep this code 
+```javascript
+import mongoose from "mongoose";
+
+const userSchema = new mongoose.Schema({
+    email: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    fullName: {
+        type: String,
+        required: true,
+    },
+    password: {
+        type: String,
+        required: true,
+        minlength: 6,
+    },
+    profilepic: {
+        type: String,
+        default: "",
+    }
+}, { timestamps: true }
+);
+
+const User = mongoose.model("User", userSchema);
+
+export default User;
+```
+
