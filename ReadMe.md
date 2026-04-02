@@ -31,7 +31,7 @@ Create Package.json file
 ```
 
 ```bash
-   npm i express@4.21.2
+   npm i express@4.21.2 cookie-parser cloudinary
 ```
 ```bash
    npm i mongoose@8.10.1 jsonwebtoken@9.0.2 bcryptjs@2.4.3
@@ -256,3 +256,186 @@ const User = mongoose.model("User", userSchema);
 export default User;
 ```
 
+# In Controller file we add write and export code of Signup , login , logout 
+Keep Follow this code 
+
+```javascript
+export const signup = async (req, res) => {
+    const { email, fullName, password } = req.body;
+
+    try {
+
+        if (!email || !fullName || !password) {
+            return res.status(400).json({ message: "All Fields are Required" })
+        }
+
+        if (password.length < 6) {
+            return res.status(400).json({ message: "Password is Too Small" });
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            return res.status(400).json({ message: "Invalid Email Format" })
+        }
+
+        const user = await User.findOne({ email });
+        if (user) return res.status(400).json({ message: "Email Already Exists" })
+
+        const salt = await bcrypt.genSalt(10);
+        const HashPassword = await bcrypt.hash(password, salt)
+
+        const newUser = new User({
+            fullName,
+            email,
+            password: HashPassword
+        })
+
+        if (newUser) {
+            await newUser.save();
+            await generateToken(newUser._id, res);
+
+            return res.status(201).json({
+                _id: newUser._id,
+                email: newUser.email,
+                fullName: newUser.fullName,
+                profilepic: newUser.profilepic
+            });
+        } else {
+            res.status(400).json({ message: "Invalid User Data" })
+        }
+
+    } catch (error) {
+        console.error("Error in Sign Up Controller", error);
+        return res.status(500).json({ message: "Internal Server Error" })
+    }
+}
+export const login = async (req, res) => {
+    const { email, password } = req.body;
+    try {
+
+        const user = await User.findOne({ email });
+        if (!user) return res.status(400).json({ message: "Invalid credentials" });
+
+        const isPasswordCorrect = await bcrypt.compare(password, user.password)
+        if (!isPasswordCorrect) return res.status(400).json({ message: "Invalid credentials" })
+
+        await generateToken(user._id, res)
+        res.status(200).json({
+            _id: user._id,
+            email: user.email,
+            fullName: user.fullName,
+            profilepic: user.profilepic,
+        })
+
+    } catch (error) {
+        console.error("Something Gonna Wrong", error);
+        return res.status(500).json({ message: "Internal Server Error" })
+    }
+}
+export const logout = async (_, res) => {
+    res.cookie("jwt", "", { maxAge: 0 })
+    res.status(200).json({ message: "Logout Successfully" })
+}
+```
+
+Here , Your Authentication have completed;
+
+
+# Now create Middleware for Updateing the Information from Database 
+
+```base
+Why ?? we Create Middleware
+Ans = Middleware is a like a Bodygaurd if you have Token then you can change sensitive information like name , email , profilepic and much more;
+```
+So we want to upload and remove profile pic , this is sensitive information that's why we create middleware.
+
+# Follow these Steps
+- Create Folder Named as Middleware
+- Create file Named as auth.middleware.js 
+- keep this code in auth.middleware.js
+```javascript
+import jwt from "jsonwebtoken"
+
+import User from "../models/User.js";
+import { ENV } from "../lib/env.js";
+
+export const protectRoute = async (req, res, next) => {
+    try {
+        const token = req.cookies.jwt;
+        if (!token) return res.status(401).json({ message: "No Token Provided" });
+
+        const decoded = jwt.verify(token, ENV.JWT_SECRET)
+        if (!decoded) return res.status(401).json({ message: "Unuthorize _ Invalid Token" })
+
+        const user = await User.findById(decoded.userId).select("-password")
+        if (!user) return res.status(401).json({ message: "User Not Found" })
+
+        req.user = user;
+        next()
+    } catch (error) {
+        console.error("Error in protective middleware",error);
+        res.status(500).json({message:"Internal Server Error"})
+    }
+
+}
+```
+
+and Add in Routes like this
+
+```javascript
+
+router.put('/update-profile', protectRoute, updateProfile);
+
+router.get('/check', protectRoute, (req, res) => { res.status(200).json(req.user) })
+```
+
+Export And Import ProtectRoute
+
+# Now , in auth.contorller.js file , We Write code for updateProfile
+keep this code 
+
+```javascript
+export const updateProfile = async (req, res , next) => {
+    try {
+        const {profilepic} = req.body;
+
+        if(!profilepic) return res.status(400).json({message:"Profile pic is required"})
+
+        const userId = req.userId;
+        const uploadResponce = await cloudinary.uploader.upload(profilepic);
+
+        const updateUser = await User.findById(
+            userId,
+            {profilepic:uploadResponce.secure_url},
+            {new:true}
+        )
+
+        res.status(200).json({updateUser})
+    } catch (error) {
+        console.log("Error In update Profile",error);
+        res.status(500).jsom({message:"Internal server error"})
+    }
+}
+```
+In This code We Write about Cloudinary 
+#### What is Cloudinary ??
+#### And - Cloudinary is a Tool which is use to store the images and video and it generate a link , we save this link in our database and use the link in the frontend to show the our image
+
+## Before Using this code follow this 
+- open lib folder 
+- Create a File named as Cloudinary.js 
+
+Keep this code
+
+```javascript
+import { v2 as cloudinary } from "cloudinary"
+import { ENV } from "./env.js"
+
+cloudinary.config({
+    cloud_name:ENV.CLOUDINARY_CLOUD_NAME,
+    api_key:ENV.CLOUDINARY_API_KEY,
+    api_secret:ENV.CLOUDINARY_API_SECRET,
+})
+
+export default cloudinary;
+```
