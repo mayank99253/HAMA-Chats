@@ -1,6 +1,10 @@
+//import form Libraries 
 import express from 'express';
 import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser'
+import cors from 'cors';
+
+//import form Files
 import authRoute from './routes/auth.route.js'
 import messageRoute from './routes/message.route.js'
 import { connectDB } from './lib/db.js';
@@ -8,6 +12,8 @@ dotenv.config();
 
 const app = express();
 const Port = process.env.PORT || 3000;
+
+app.use(cors());
 
 app.use(express.json({"limit":"5MB"})) // allow inputs to connect with backend , req.body;
 app.use(cookieParser())

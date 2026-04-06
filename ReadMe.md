@@ -404,7 +404,7 @@ export const updateProfile = async (req, res , next) => {
         const userId = req.userId;
         const uploadResponce = await cloudinary.uploader.upload(profilepic);
 
-        const updateUser = await User.findById(
+        const updateUser = await User.findByIdAndUpate(
             userId,
             {profilepic:uploadResponce.secure_url},
             {new:true}
@@ -413,7 +413,7 @@ export const updateProfile = async (req, res , next) => {
         res.status(200).json({updateUser})
     } catch (error) {
         console.log("Error In update Profile",error);
-        res.status(500).jsom({message:"Internal server error"})
+        res.status(500).json({message:"Internal server error"})
     }
 }
 ```
@@ -438,4 +438,8 @@ cloudinary.config({
 })
 
 export default cloudinary;
+```
+
+```base
+npm i @arcjet/node@1.0.0-beta.10 @arcjet/inspect@1.0.0-beta.10
 ```
