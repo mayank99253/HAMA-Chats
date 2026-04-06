@@ -41,11 +41,17 @@ export const sendMessage = async (req, res) => {
         const { id: Reciever } = req.params;
         const Sender = req.user._id;
 
+        if (!text && !image) {
+            return res.status(400).json({ message: "Message must contain text or image" });
+        }
+        
         let imageUrl;
         if (image) {
             const uploadResponce = await cloudinary.uploader.upload(image);
             imageUrl = uploadResponce.secure_url;
         }
+
+       
 
         const newMessage = new Message({
             Sender,
@@ -75,7 +81,7 @@ export const getChatsPartners = async (req, res) => {
 
         const chatPartnerIds = [
             ...new Set(
-                messages.map((msg) => 
+                messages.map((msg) =>
                     msg.Sender.toString() === loggedUserId.toString() ?
                         msg.Reciever.toString() : msg.Sender.toString()
                 )
@@ -83,7 +89,7 @@ export const getChatsPartners = async (req, res) => {
         ]
 
         const chatPartners = await User.find({ _id: { $in: chatPartnerIds } }).select("-password")
-        
+
         res.status(200).json(chatPartners)
     } catch (error) {
         console.error("Error in getChatsPartners", error);
