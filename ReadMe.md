@@ -443,3 +443,8 @@ export default cloudinary;
 ```base
 npm i @arcjet/node@1.0.0-beta.10 @arcjet/inspect@1.0.0-beta.10
 ```
+
+## Message Endpoint Pending....
+## Write full Message authentication sending recieving methoda , codes , logics
+## delop the backend
+## Setup the frontend , create and explain = pages folder , tailwind setup , daisy ui setup , component folder , install axios and zustand@5.0.3 create store folder for zustand , lib for axios 
