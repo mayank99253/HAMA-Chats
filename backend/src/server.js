@@ -11,9 +11,12 @@ import { connectDB } from './lib/db.js';
 dotenv.config();
 
 const app = express();
-const Port = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors({
+    origin: 'http://localhost:3000',
+    credentials: true
+}));
 
 app.use(express.json({"limit":"5MB"})) // allow inputs to connect with backend , req.body;
 app.use(cookieParser())
@@ -25,8 +28,8 @@ app.use("/api/messages", messageRoute)
 
 const startServer = async () => {
     await connectDB();
-    app.listen(Port, () => {
-        console.log(`Server is Running on Port ${Port}`);
+    app.listen(PORT, () => {
+        console.log(`Server is Running on Port ${PORT}`);
     });
 };
 
