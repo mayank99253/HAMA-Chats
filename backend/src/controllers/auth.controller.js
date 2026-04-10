@@ -17,7 +17,7 @@ export const signup = async (req, res) => {
             return res.status(400).json({ message: "Password is Too Small" });
         }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; ///^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; ///^[^\;
         if (!emailRegex.test(email)) {
             return res.status(400).json({ message: "Invalid Email Format" })
         }
