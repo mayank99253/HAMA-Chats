@@ -10,8 +10,6 @@ const Signup = () => {
   function handleSubmit(e) {
     e.preventDefault();
     signup(fromData);
-    console.log(fromData);
-
   }
   return (
     <div className="h-screen w-full bg-[#0a0a0a] flex justify-center items-center overflow-hidden relative font-sans">
