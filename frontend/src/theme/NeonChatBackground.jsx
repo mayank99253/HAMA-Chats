@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 export default function NeonChatBackground() {
-  const [message, setMessage] = useState("");
 
   return (
     <div className="relative min-h-screen w-screen bg-[#0a0a0f] flex items-center justify-center overflow-hidden font-sans">

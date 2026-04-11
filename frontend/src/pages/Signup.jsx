@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { Link } from 'react-router-dom'
 import { User, Mail, Lock, ArrowRight } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
+import AestheticBackground from "../theme/AestheticBackground";
+
 const Signup = () => {
 
   const [fromData, setFromData] = useState({ fullName: "", email: "", password: "" })
@@ -14,8 +16,7 @@ const Signup = () => {
   return (
     <div className="h-screen w-full bg-[#0a0a0a] flex justify-center items-center overflow-hidden relative font-sans">
       {/* Aesthetic Background Elements */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-900/20 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-900/20 blur-[120px] rounded-full" />
+      <AestheticBackground />
 
       <div className="z-10 h-[90vh] w-[90vw] max-w-6xl bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[2.5rem] flex overflow-hidden shadow-2xl">
 
@@ -33,7 +34,7 @@ const Signup = () => {
 
           <div className="space-y-6">
             <div className="space-y-4">
-              <form onSubmit={handleSubmit}>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
                 <div className="relative group">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" size={18} />
                   <input
