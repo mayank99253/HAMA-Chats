@@ -5,7 +5,8 @@ import Chatpage from './pages/Chatpage'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import { useAuthStore } from './store/useAuthStore'
-import PageLoader from './component/PageLoader'
+import PageLoader from './loader/PageLoader'
+import HamaPageLoader from './loader/HamaPageLoader'
 import { Toaster } from 'react-hot-toast'
 
 const App = () => {
@@ -37,6 +38,8 @@ const App = () => {
         />
         {/* Fallback route */}
         <Route path='*' element={<Navigate to="/" replace />} />
+
+        <Route path='/loader' element={<HamaPageLoader/>} />
       </Routes>
 
       <Toaster
