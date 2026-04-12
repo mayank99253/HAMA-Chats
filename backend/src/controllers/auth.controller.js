@@ -80,24 +80,24 @@ export const logout = async (_, res) => {
     res.cookie("jwt", "", { maxAge: 0 })
     res.status(200).json({ message: "Logout Successfully" })
 }
-export const updateProfile = async (req, res , next) => {
+export const updateProfile = async (req, res, next) => {
     try {
-        const {profilepic} = req.body;
+        const { profilepic } = req.body;
 
-        if(!profilepic) return res.status(400).json({message:"Profile pic is required"})
+        if (!profilepic) return res.status(400).json({ message: "Profile pic is required" })
 
-        const userId = req.userId;
+        const userId = req.user._id;
         const uploadResponce = await cloudinary.uploader.upload(profilepic);
 
         const updateUser = await User.findByIdAndUpdate(
             userId,
-            {profilepic:uploadResponce.secure_url},
-            {new:true}
+            { profilepic: uploadResponce.secure_url },
+            { new: true }
         )
 
-        res.status(200).json({updateUser})
+        res.status(200).json({ updateUser })
     } catch (error) {
-        console.log("Error In update Profile",error);
-        res.status(500).json({message:"Internal server error"})
+        console.log("Error In update Profile", error);
+        res.status(500).json({ message: "Internal server error" })
     }
 }

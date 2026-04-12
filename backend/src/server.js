@@ -14,12 +14,24 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+const allowedOrigins = [
+  'http://localhost:5173',   // your local frontend (Vite)
+  'http://localhost:3000',   // or CRA
+  'https://your-frontend-domain.com'  // your deployed frontend URL
+];
+
 app.use(cors({
-    // Make sure this matches exactly what you see in your browser address bar
-    origin: ENV.CLIENT_URL, 
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Content-Type", "Authorization"]
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,  // if you're using cookies/sessions
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(express.json({"limit":"5MB"})) // allow inputs to connect with backend , req.body;
