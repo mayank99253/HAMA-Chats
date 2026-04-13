@@ -14,7 +14,7 @@ const Chatpage = () => {
   return (
     <div className='h-screen w-screen flex items-center justify-center relative font-sans overflow-hidden'>
       <AestheticBackground />
-      <div className='h-[80vh] w-[70vw] max-w-7xl bg-white/[0.01] backdrop-blur-3xl border border-white/10 rounded-[3rem] flex overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] z-10'>
+      <div className='h-[90vh] w-[65vw] max-w-7xl bg-white/[0.01] backdrop-blur-3xl border border-white/10 rounded-[3rem] flex overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] z-10'>
         <div className='w-1/4 border-r border-white/10'>
           {/* Sidebar */}
           <div className='h-full w-full flex flex-col items-center justify-start gap-4 p-4'>
@@ -31,10 +31,7 @@ const Chatpage = () => {
         </div>
         {/* Right Side */}
         <div className='w-3/4'>
-          {selectedUser ? (
-            <ChatContainer />
-          ) : (<NoChatConversation />)
-          }
+          {selectedUser ? ( <ChatContainer /> ) : (<NoChatConversation />) }
         </div>
       </div>
     </div>

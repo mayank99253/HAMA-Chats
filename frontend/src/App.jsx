@@ -8,6 +8,7 @@ import { useAuthStore } from './store/useAuthStore'
 import PageLoader from './loader/PageLoader'
 import HamaPageLoader from './loader/HamaPageLoader'
 import { Toaster } from 'react-hot-toast'
+import MouseFolloower from './components/MouseFolloower'
 
 const App = () => {
   const { checkAuth, authUser, isCheckingAuth } = useAuthStore()
@@ -40,6 +41,8 @@ const App = () => {
         <Route path='*' element={<Navigate to="/" replace />} />
 
         <Route path='/loader' element={<HamaPageLoader/>} />
+
+        <Route path='/follower' element={<MouseFolloower/>} />
       </Routes>
 
       <Toaster
