@@ -36,6 +36,7 @@ app.use(cors({
 
 app.use(express.json({"limit":"5MB"})) // allow inputs to connect with backend , req.body;
 app.use(cookieParser())
+
 //Creating APIs 
 
 app.use("/api/auth", authRoute)

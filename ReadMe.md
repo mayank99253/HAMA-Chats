@@ -444,7 +444,390 @@ export default cloudinary;
 npm i @arcjet/node@1.0.0-beta.10 @arcjet/inspect@1.0.0-beta.10
 ```
 
-## Message Endpoint Pending....
-## Write full Message authentication sending recieving methoda , codes , logics
-## delop the backend
+## Message Endpoint Start From Here;
+We havw to do 3 things 
+
+1. Create Api in the server.js file
+
+```javascript
+app.use('/api/messages',messageRoutes)
+```
+
+2. Craete the Message.route.js file inside routes folder
+```javascript
+import express from "express";
+import { protectRoute } from "../middleware/auth.middleware.js";
+import { getAllContact ,getMessagesByUserId ,sendMessage ,getChatsPartners} from '../controllers/message.controller.js'
+
+const router = express.Router();
+
+router.get('/contacts', protectRoute, getAllContact)
+router.get('/chats',protectRoute,getChatsPartners)
+router.get('/:id',protectRoute , getMessagesByUserId)
+router.post('/send/:id' ,protectRoute,sendMessage)
+
+export default router;
+```
+3. Create the message.controller.js file inside the controller folders 
+
+```javascript
+import Message from "../models/Message.js"
+import User from '../models/User.js'
+
+import cloudinary from "../lib/cloudinary.js";
+
+export const getAllContact = async (req, res) => {
+    try {
+        const loggedUser = req.user._id;
+
+        const FilterUser = await User.find({ _id: { $ne: loggedUser } }).select("-password")
+
+        res.status(200).json(FilterUser)
+    } catch (error) {
+        console.error("Error in getAllContact ", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
+export const getMessagesByUserId = async (req, res) => {
+    try {
+        const myId = req.user._id;
+        const { id: usertochat } = req.params;
+
+        const allmessages = await Message.find({
+            $or: [
+                { Sender: myId, Reciever: usertochat },
+                { Sender: usertochat, Reciever: myId }
+            ]
+        })
+
+        res.status(200).json(allmessages)
+    } catch (error) {
+        console.error("Error in getMessagesByUserId", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
+export const sendMessage = async (req, res) => {
+    try {
+        const { text, image } = req.body;
+        const { id: Reciever } = req.params;
+        const Sender = req.user._id;
+
+        let imageUrl;
+        if (image) {
+            const uploadResponce = await cloudinary.uploader.upload(image);
+            imageUrl = uploadResponce.secure_url;
+        }
+
+        const newMessage = new Message({
+            Sender,
+            Reciever,
+            text,
+            imageUrl,
+        })
+
+        await newMessage.save();
+        //  Todo - adding the socket io
+        res.status(201).json(newMessage)
+    } catch (error) {
+        console.error("Error in sendMessage", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+}
+
+export const getChatsPartners = async (req, res) => {
+    try {
+        const loggedUserId = req.user._id;
+
+        //find al the messages from data base either sender or receiver
+
+        const messages = await Message.find({
+            $or: [{ Sender: loggedUserId }, { Reciever: loggedUserId }]
+        });
+
+        const chatPartnerIds = [
+            ...new Set(
+                messages.map((msg) => 
+                    msg.Sender.toString() === loggedUserId.toString() ?
+                        msg.Reciever.toString() : msg.Sender.toString()
+                )
+            )
+        ]
+
+        const chatPartners = await User.find({ _id: { $in: chatPartnerIds } }).select("-password")
+        
+        res.status(200).json(chatPartners)
+    } catch (error) {
+        console.error("Error in getChatsPartners", error);
+        res.status(500).json({ message: "Internal Server Error", error: error.message });
+    }
+}
+```
+
+## Backend Is Done 
+
+Last Folder Stucture -
+
+```base
+Backend ____
+                        |-node_modules
+                        |-src  ___
+                                        |-controller__
+                                                                |-auth.controller.js
+                                                                |-message.controller.js
+                                        |-lib_
+                                                  |-arcjet.js
+                                                  |-cloudinary.js
+                                                  |-db.js
+                                                  |-env.js
+                                                  |-utils.js
+                                        |-routes_
+                                                        |-auth.route.js
+                                                        |-message.route.js
+                                        |-middleware_
+                                                                |-arcjet.middleware.js
+                                                                |-auth.middleware.js
+                                        |-models_
+                                                        |-User.js
+                                                        |-Message.js
+                                        |-server.js
+                        |-.env
+                        |-package-lock.json
+                        |-package.json
+```
+# Frontend Set up 
+
+### Here we Create a React App , in the Previous Codes 
+
+But whatever we start from the Start
+
+1. Install Vite Bundler
+```
+npm i create vite
+```
+2. Setup Tailwindcss v3
+```
+npm i tailwindcss@v3
+```
+3. Setup Daisy Ui v4 - Better Class Utilization for tailwindcss
+```
+npm i daisyui@4
+```
+4. install these Resources 
+```
+npm i axios@1.14.0  zustand@5.0.3  lucide-react  react-router react-router-dom  react-hot-toast
+```
+
+# Clean the App.jsx , index.css - Remove the all code from this 
+# Delete this files App.jsx , assets folder 
+
+After this
+
+## 1. Centralize the Data in a File 
+   ### Create lib Folder and create axios.js file inside the folder
+   ### Create Store Folder in the src folder and create a file UseAuthStore.js 
+
+Keep this code - for axios.js
+
+```javascript 
+import axios from 'axios'
+
+// const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.MODE === 'development' ? 'https://hama-chats-1.onrender.com/api' : '/api')
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.MODE === 'development' ? 'http://localhost:5000/api' : '/api')
+
+export const axiosInstance = axios.create({
+    baseURL: API_BASE_URL,
+    withCredentials: true,
+})
+
+```
+
+Keep this code - for UseAuthStore.js
+
+```javascript
+import { create } from 'zustand'
+import { axiosInstance } from '../lib/axios'
+import { toast } from "react-hot-toast"
+export const useAuthStore = create((set) => ({
+    authUser: null,
+    isCheckingAuth: false,
+    isSigningUp: false,
+    isLogin: false,
+
+
+    checkAuth: async () => {
+        set({ isCheckingAuth: true })
+        try {
+            const res = await axiosInstance.get('/auth/check');
+            set({ authUser: res.data })
+        } catch (error) {
+            set({ authUser: null })
+        }
+        finally {
+            set({ isCheckingAuth: false })
+        }
+    },
+
+    signup: async (data) => {
+        set({ isSigningUp: true });
+        try {
+            const res = await axiosInstance.post("/auth/signup", data);
+            set({ authUser: res.data })
+            toast.success("Account Created Successfully");
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Something went wrong")
+        }
+        finally {
+            set({ isSigningUp: false })
+        }
+    },
+
+    login: async (data) => {
+        set({ isLogin: true })
+        try {
+            const res = await axiosInstance.post("/auth/login", data);
+            set({ authUser: res.data })
+            toast.success("User Logged In")
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Login Error");
+        }
+        finally {
+            set({ isLogin: false })
+        }
+    },
+
+    logout : async()=>{
+        try {
+            const res = await axiosInstance.post('/auth/logout');
+            set({authUser:null})
+            toast.success("Logged Out Successfully")
+        } catch (error) {
+            toast.error(error.response?.data?.message)
+        }
+    },
+
+    updateProfilePicture: async (data) => {
+        try {
+            const res = await axiosInstance.put('/auth/update-profile', data);
+            set({ authUser: res.data });
+            toast.success("Profile Picture Updated Successfully");
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Something went wrong");
+            console.error("Error updating profile picture:", error);
+        }
+    }
+
+}))
+```
+
+# 2. Keep this in App.jsx file
+ 
+ ```javascript
+ import React, { useEffect } from 'react'
+import { Navigate, Route, Routes } from 'react-router-dom'
+import NeonChatBackground from './theme/NeonChatBackground'
+import Chatpage from './pages/Chatpage'
+import Login from './pages/Login'
+import Signup from './pages/Signup'
+import { useAuthStore } from './store/useAuthStore'
+import PageLoader from './loader/PageLoader'
+import HamaPageLoader from './loader/HamaPageLoader'
+import { Toaster } from 'react-hot-toast'
+import MouseFolloower from './components/MouseFolloower'
+
+const App = () => {
+  const { checkAuth, authUser, isCheckingAuth } = useAuthStore()
+
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
+
+  if (isCheckingAuth) return <PageLoader />
+
+  return (
+    <div className='relative h-screen w-screen flex items-center justify-center'>
+      {/* Full-screen background */}
+
+
+      <Routes>
+        <Route
+          path='/'
+          element={authUser ? <Chatpage /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path='/login'
+          element={authUser ? <Navigate to="/" replace /> : <Login />}
+        />
+        <Route
+          path='/signup'
+          element={authUser ? <Navigate to="/" replace /> : <Signup />}
+        />
+        {/* Fallback route */}
+        <Route path='*' element={<Navigate to="/" replace />} />
+
+        <Route path='/loader' element={<HamaPageLoader/>} />
+
+        <Route path='/follower' element={<MouseFolloower/>} />
+      </Routes>
+
+      <Toaster
+        position="top-center"
+        reverseOrder={false}
+      />
+    </div>
+  )
+}
+
+export default App
+ ```
+
+# 3. main.jsx file keep this code 
+```javascript
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import './index.css'
+import App from './App.jsx'
+import { BrowserRouter } from 'react-router-dom'
+
+createRoot(document.getElementById('root')).render(
+  <BrowserRouter>
+    <App />
+  </BrowserRouter>
+
+)
+```
+
+# 4. now Create Folders and Keep this folder Stucture 
+
+```javascript 
+src__
+            |-components__
+                                         |-ActiveTabSwitch.jsx
+                                         |-ChatContainer.jsx
+                                         |-ChatList.jsx
+                                         |-ContactList.jsx
+                                         |-NoChatConversation.jsx
+                                         |-NoChatFound.jsx
+                                         |-ProfileHeader.jsx
+                                         |-UserLoadingSkeleton.jsx
+            |-pages__
+                            |-Chatpage.jsx
+                            |-Login.jsx
+                            |-Signup.jsx
+            |-store__
+                            |-useAuthStore.jsx
+                            |-useChatStore.jsx
+            |-loader__
+                             |-PageLoader.jsx
+            |-lib__
+                        |-axios.js
+            |-theme__
+                            |-AestheticBackground.jsx
+            |-App.jsx
+            |-main.jsx
+            |-index.css
+```
+
 ## Setup the frontend , create and explain = pages folder , tailwind setup , daisy ui setup , component folder , install axios and zustand@5.0.3 create store folder for zustand , lib for axios 
