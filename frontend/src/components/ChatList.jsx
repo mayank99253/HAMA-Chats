@@ -24,7 +24,7 @@ const ChatList = () => {
           className='px-3 py-2 flex gap-2 bg-blue-900/20 hover:bg-blue-900/30 rounded-lg cursor-pointer'
         >
           {chat.profilepic ? (
-            <div className='avatar online h-10 rounded-full'>
+            <div className='avatar online h-10 w-10 rounded-full'>
               <img
                 src={chat.profilepic}
                 alt={chat.fullName}
