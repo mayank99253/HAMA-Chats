@@ -29,7 +29,12 @@ const ChatContainer = () => {
                 <div className={`chat-bubble ${message.Sender === authUser._id ? " bg-cyan-500 text-white" : " bg-gray-600 text-white"}`}>
                   {message.image && <img src={message.image} alt="message attachment" className='w-48 h-48 object-cover mb-2 rounded-lg' />}
                   {message.text && <p>{message.text}</p>}
-                  <p className='text-xs text-gray-400'>{new Date(message.createdAt).toISOString().slice(11, 16)}</p>
+                  <p className='text-xs text-gray-400'>
+                    {new Date(message.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
                 </div>
               </div>
             ))}

@@ -36,11 +36,14 @@ const ChatHeader = () => {
             </div>
 
             {/* RightSide */}
-            <div
+            <button
+                type="button"
                 onClick={() => { setSelectedUser(null) }}
-                className='right cursor-pointer ml-10'>
-                <XCircleIcon size={30} />
-            </div>
+                aria-label="Close conversation"
+                className='right cursor-pointer ml-10'
+            >
+                <XCircleIcon size={30} aria-hidden="true" />
+            </button>
         </div>
     )
 }
