@@ -1,32 +1,43 @@
-import React, { use, useEffect } from 'react'
+import React, { use, useEffect, useRef } from 'react'
 import ChatHeader from './ChatHeader'
 import { useChatStore } from '../store/useChatStore';
 import { useAuthStore } from '../store/useAuthStore';
 import NoChatHistoryPlaceHolder from './NoChatHistoryPlaceHolder';
 import MessagesLoadingSkeleton from './MessagesLoadingSkeleton';
+import MessageInput from './MessageInput';
 
 const ChatContainer = () => {
 
-  const { selectedUser, getMessagesByUserId, messages , isMessagesLoading } = useChatStore();
+  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading } = useChatStore();
 
   const { authUser } = useAuthStore();
 
+  const messagesEndRef = useRef(null);
+
   useEffect(() => {
     getMessagesByUserId(selectedUser?._id);
-  }, [selectedUser , getMessagesByUserId])
+  }, [selectedUser, getMessagesByUserId])
+
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight
+    }
+  }, [messages]);
   return (
-    <div className='w-full h-full '>
+    <div className='w-full h-full flex flex-col'>
 
       {/* ChatHeader */}
       <ChatHeader />
 
-      {/* MessageBox */}
-      <div className='message-box'>
+      {/* MessageBox - removed conflicting classes */}
+      <div className='flex-1 overflow-y-auto p-4 flex flex-col gap-2'> 
         {messages.length > 0 && !isMessagesLoading ? (
-          <div className='messages-container p-4 flex flex-col gap-2 overflow-y-auto h-[calc(100%-4rem)]'>
+          <div ref={messagesEndRef} style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
             {messages.map((message) => (
-              <div key={message._id} className={`message-item ${message.Sender === authUser._id ? "chat-start" : "chat-end"}`}>
-                <div className={`chat-bubble ${message.Sender === authUser._id ? " bg-cyan-500 text-white" : " bg-gray-600 text-white"}`}>
+              <div key={message._id} className={`message-item chat ${message.Sender === authUser._id ? "chat-end" : "chat-start"}`}>
+                <div className={`chat-bubble 
+                ${message.Sender === authUser._id ?
+                    " bg-cyan-900 text-white" : " bg-gray-600 text-white"}`}>
                   {message.image && <img src={message.image} alt="message attachment" className='w-48 h-48 object-cover mb-2 rounded-lg' />}
                   {message.text && <p>{message.text}</p>}
                   <p className='text-xs text-gray-400'>
@@ -39,14 +50,15 @@ const ChatContainer = () => {
               </div>
             ))}
           </div>
-
         ) : isMessagesLoading ? (
           <MessagesLoadingSkeleton />
         ) : (
           <NoChatHistoryPlaceHolder name={selectedUser?.fullName} />
         )}
       </div>
-      {/* MessageInputBox */}
+
+      {/* MessageInput */}
+      <MessageInput />
 
     </div>
   )
