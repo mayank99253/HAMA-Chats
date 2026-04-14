@@ -16,7 +16,7 @@ const ChatList = () => {
   if (chats.length === 0) return <NoChatsFound />
 
   return (
-    <div>
+    <div className='w-full h-full p-1 flex flex-col gap-2 overflow-y-auto'>
       {chats.map((chat) => (
         <div
           key={chat._id}

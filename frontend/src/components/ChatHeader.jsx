@@ -18,7 +18,7 @@ const ChatHeader = () => {
     }, [selectedUser])
 
     return (
-        <div className='w-full h-16 border-b flex items-center justify-between px-4'>
+        <div className='w-full h-16 border-b border-gray-300/20 flex items-center justify-between px-4'>
             {/* LeftSide */}
             <div className='left flex items-center gap-4'>
 

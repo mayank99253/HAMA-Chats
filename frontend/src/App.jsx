@@ -20,7 +20,7 @@ const App = () => {
   if (isCheckingAuth) return <PageLoader />
 
   return (
-    <div className='relative h-screen w-screen flex items-center justify-center'>
+    <div className='relative h-screen w-screen flex items-center justify-center overflow-hidden'>
       {/* Full-screen background */}
 
 
@@ -40,9 +40,9 @@ const App = () => {
         {/* Fallback route */}
         <Route path='*' element={<Navigate to="/" replace />} />
 
-        <Route path='/loader' element={<HamaPageLoader/>} />
-
-        <Route path='/follower' element={<MouseFolloower/>} />
+        {/* <Route path='/loader' element={<HamaPageLoader/>} /> */}
+{/* 
+        <Route path='/follower' element={<MouseFolloower/>} /> */}
       </Routes>
 
       <Toaster

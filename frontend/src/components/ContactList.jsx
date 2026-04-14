@@ -12,7 +12,7 @@ const ContactList = () => {
   if (isUsersLoading) return <UserLoadingSkeleton />
 
   return (
-    <div className='h-full w-full flex gap-3 text-white/70  flex-col'>
+    <div className='h-full w-full flex gap-3 text-white/70 flex-col'>
       {allcontacts.map((contact) => (
         <div
           key={contact._id}
