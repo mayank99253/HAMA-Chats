@@ -65,7 +65,7 @@ export const useChatStore = create((set, get) => ({
 
         const optimisticMessage = {
             _id: tempId,
-            senderId: authUser._id,   // ✅ FIX 3: unified field name to senderId
+            senderId: authUser._id,   //
             receiverId: selectedUser._id,
             text: messageData.text,
             image: messageData.image,
@@ -113,6 +113,7 @@ export const useChatStore = create((set, get) => ({
 
     unsubscribeFromMessages: () => {
         const socket = useAuthStore.getState().socket;
+        if (!socket) return;
         socket.off("newMessage");
     },
 }))
