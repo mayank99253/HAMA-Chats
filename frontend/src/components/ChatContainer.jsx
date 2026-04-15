@@ -8,7 +8,7 @@ import MessageInput from './MessageInput';
 
 const ChatContainer = () => {
 
-  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading } = useChatStore();
+  const { selectedUser, getMessagesByUserId, messages, isMessagesLoading , subscribeToMessages , unsubscribeFromMessages } = useChatStore();
 
   const { authUser } = useAuthStore();
 
@@ -16,11 +16,16 @@ const ChatContainer = () => {
 
   useEffect(() => {
     getMessagesByUserId(selectedUser?._id);
-  }, [selectedUser, getMessagesByUserId])
+    subscribeToMessages()
+
+    //clean up function 
+    return ()=> unsubscribeFromMessages()
+  }, [selectedUser, getMessagesByUserId , subscribeToMessages , unsubscribeFromMessages]);
 
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight
+      // messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
   return (
@@ -32,9 +37,10 @@ const ChatContainer = () => {
       {/* MessageBox - removed conflicting classes */}
       <div className='flex-1 overflow-y-auto p-4 flex flex-col gap-2'> 
         {messages.length > 0 && !isMessagesLoading ? (
-          <div ref={messagesEndRef} style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+          <div ref={messagesEndRef} 
+          style={{ flex: 1, overflowY: "auto", padding: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
             {messages.map((message) => (
-              <div key={message._id} className={`message-item chat ${message.Sender === authUser._id ? "chat-end" : "chat-start"}`}>
+              <div key={message._id} className={`message-item chat ${message.Sender  === authUser._id ? "chat-end" : "chat-start"}`}>
                 <div className={`chat-bubble 
                 ${message.Sender === authUser._id ?
                     " bg-cyan-900 text-white" : " bg-gray-600 text-white"}`}>
@@ -49,6 +55,7 @@ const ChatContainer = () => {
                 </div>
               </div>
             ))}
+            {/* <div ref={messagesEndRef} /> Dummy div to scroll into view */}
           </div>
         ) : isMessagesLoading ? (
           <MessagesLoadingSkeleton />

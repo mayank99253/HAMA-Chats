@@ -1,10 +1,11 @@
 import React, { useEffect } from 'react'
 import UserLoadingSkeleton from './UserLoadingSkeleton';
 import { useChatStore } from '../store/useChatStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 const ContactList = () => {
   const { allcontacts, setSelectedUser, getAllContacts, isUsersLoading } = useChatStore();
-
+  const { onlineUsers } = useAuthStore();
   useEffect(() => {
     getAllContacts();
   }, [getAllContacts])
@@ -28,13 +29,13 @@ const ContactList = () => {
               />
             </div>
           ) : (
-            <div className=' avatar online w-10 h-10 rounded-full bg-gray-300'>
+            <div className={`avatar ${onlineUsers.includes(contact._id) ? 'online' : ''} w-10 h-10 rounded-full bg-gray-300`}>
               <img src="/avatar.jpg" alt="" className='object-cover w-full h-full rounded-full' />
             </div>
           )}
           <div className='flex flex-col'>
             <span>{contact.fullName}</span>
-            <span className='text-sm text-gray-500'>Online</span>
+            <span className={`text-sm ${onlineUsers.includes(contact._id) ? 'text-green-500' : 'text-gray-300/30'}`}>{onlineUsers.includes(contact._id) ? 'Online' : 'Offline'}</span>
           </div>
         </div>
       ))}

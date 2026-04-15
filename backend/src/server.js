@@ -9,12 +9,13 @@ import authRoute from './routes/auth.route.js'
 import messageRoute from './routes/message.route.js'
 import { connectDB } from './lib/db.js';
 import { ENV } from './lib/env.js';
+import { app, server } from './lib/socket.js';
 dotenv.config();
 
-const app = express();
 const PORT = process.env.PORT || 5000;
 
 const allowedOrigins = [
+  ENV.CLIENT_URL,          // from .env
   'http://localhost:5173',   // your local frontend (Vite)
   'http://localhost:3000',   // or CRA
   'https://your-frontend-domain.com'  // your deployed frontend URL
@@ -45,7 +46,7 @@ app.use("/api/messages", messageRoute)
 
 const startServer = async () => {
     await connectDB();
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
         console.log(`Server is Running on Port ${PORT}`);
     });
 };

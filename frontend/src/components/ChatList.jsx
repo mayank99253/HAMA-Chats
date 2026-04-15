@@ -2,11 +2,12 @@ import React, { useEffect } from 'react'
 import UserLoadingSkeleton from './UserLoadingSkeleton'
 import NoChatsFound from './NoChatsFound'
 import { useChatStore } from '../store/useChatStore';
+import { useAuthStore } from '../store/useAuthStore';
 
 const ChatList = () => {
 
   const { getMyChatPartners, chats, setSelectedUser, isUsersLoading } = useChatStore();
-
+  const { onlineUsers } = useAuthStore();
   useEffect(() => {
     getMyChatPartners();
   }, [getMyChatPartners])
@@ -24,7 +25,7 @@ const ChatList = () => {
           className='px-3 py-2 flex gap-2 bg-blue-900/20 hover:bg-blue-900/30 rounded-lg cursor-pointer'
         >
           {chat.profilepic ? (
-            <div className='avatar online h-10 w-10 rounded-full'>
+            <div className={`avatar ${onlineUsers.includes(chat._id) ? 'online' : ''} h-10 w-10 rounded-full`}>
               <img
                 src={chat.profilepic}
                 alt={chat.fullName}
@@ -38,7 +39,8 @@ const ChatList = () => {
           )}
           <div className='flex flex-col'>
             <span>{chat.fullName}</span>
-            <span className='text-sm text-gray-500'>Online</span>
+            <span className={`text-sm ${onlineUsers.includes(chat._id) ? 'text-green-500' : 'text-gray-300/30'}`}>{onlineUsers.includes(chat._id) ? 'Online' : 'Offline'}</span>
+
           </div>
         </div>
       ))}
