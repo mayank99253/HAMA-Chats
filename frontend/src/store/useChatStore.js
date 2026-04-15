@@ -10,8 +10,8 @@ export const useChatStore = create((set, get) => ({
     chats: [],
     ActiveTab: "chats",
     selectedUser: null,
-    isUsersLoading: false, // getAllUsers , getMyChatPartners
-    isMessagesLoading: false, // getAllMessages
+    isUsersLoading: false,
+    isMessagesLoading: false,
 
     setActiveTab: (tab) => { set({ ActiveTab: tab }) },
     setSelectedUser: (user) => { set({ selectedUser: user }) },
@@ -23,67 +23,96 @@ export const useChatStore = create((set, get) => ({
             set({ allcontacts: res.data })
         } catch (error) {
             toast.error(error.response?.data?.message)
-        }
-        finally{
-            set({isUsersLoading:false})
+        } finally {
+            set({ isUsersLoading: false })
         }
     },
-    getMyChatPartners : async (data) => {
-        set({isUsersLoading:true})
+
+    getMyChatPartners: async (data) => {
+        set({ isUsersLoading: true })
         try {
-            const res = await axiosInstance.get('/messages/chats' , data);
-            set({chats:res.data})
+            const res = await axiosInstance.get('/messages/chats', data);
+            set({ chats: res.data })
         } catch (error) {
             toast.error(error.response?.data?.message)
-        }
-        finally{
-            set({isUsersLoading:false})
+        } finally {
+            set({ isUsersLoading: false })
         }
     },
-    getMessagesByUserId : async (userId) => {
+
+    getMessagesByUserId: async (userId) => {
         if (!userId) {
             set({ messages: [], isMessagesLoading: false });
             return;
         }
-
         set({ isMessagesLoading: true, messages: [] })
         try {
-             const res = await axiosInstance.get(`/messages/${userId}`);
-            set({messages:res.data}) 
+            const res = await axiosInstance.get(`/messages/${userId}`);
+            set({ messages: res.data })
         } catch (error) {
             set({ messages: [] })
             toast.error(error.response?.data?.message ?? "Failed to load messages")
-        }
-        finally{
-            set({isMessagesLoading:false})
+        } finally {
+            set({ isMessagesLoading: false })
         }
     },
 
-    sendMessage : async (messageData) => {
-        const {selectedUser , messages} = get();
-        const {authUser} = useAuthStore.getState();
+    sendMessage: async (messageData) => {
+        const { selectedUser } = get();
+        const { authUser } = useAuthStore.getState();
 
-        const tempId = `temp-${Date.now()}`
+        const tempId = `temp-${Date.now()}`;
 
         const optimisticMessage = {
-            _id : tempId,
-            Sender : authUser._id,
-            Reciever : selectedUser._id,
-            text:messageData.text,
-            image:messageData.image,
-            createdAt : new Date().toISOString(),
-            isOptimistic :true,
-        }
-        // Imidiate change the UI when user send the message
-        set({messages : [...messages , optimisticMessage]})
-            try {
-                const res = await axiosInstance.post(`/messages/send/${selectedUser._id}` , messageData);
-                set({messages: messages.concat(res.data)})
-            } catch (error) {
-                //remove optimistic messages on the failure
-                set({messages :messages})
-                toast.error(error.response?.data?.message || "Failed to send message")
-            }
-    }
+            _id: tempId,
+            senderId: authUser._id,   // ✅ FIX 3: unified field name to senderId
+            receiverId: selectedUser._id,
+            text: messageData.text,
+            image: messageData.image,
+            createdAt: new Date().toISOString(),
+            isOptimistic: true,
+        };
 
+        set((state) => ({ messages: [...state.messages, optimisticMessage] }));
+
+        try {
+            const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
+            // ✅ FIX 1: Use functional update to get fresh state, replace optimistic msg
+            set((state) => ({
+                messages: state.messages
+                    .filter((m) => m._id !== tempId)
+                    .concat(res.data)
+            }));
+        } catch (error) {
+            // ✅ FIX 1: Remove only the failed optimistic message, keep rest intact
+            set((state) => ({
+                messages: state.messages.filter((m) => m._id !== tempId)
+            }));
+            toast.error(error.response?.data?.message || "Failed to send message");
+        }
+    },
+
+    subscribeToMessages: () => {
+        const { selectedUser } = get();
+        if (!selectedUser) return;
+
+        const socket = useAuthStore.getState().socket;
+        if (!socket) return; // ✅ guard against null socket
+
+        // ✅ FIX 2: Remove old listener before adding new one to prevent duplicates
+        socket.off("newMessage");
+
+        socket.on("newMessage", (newMessage) => {
+            // ✅ FIX 3: Using Sender consistently
+            const isMessageSentFromSelectedUser = newMessage.Sender === selectedUser._id;
+            if (!isMessageSentFromSelectedUser) return;
+
+            set((state) => ({ messages: [...state.messages, newMessage] }));
+        });
+    },
+
+    unsubscribeFromMessages: () => {
+        const socket = useAuthStore.getState().socket;
+        socket.off("newMessage");
+    },
 }))
