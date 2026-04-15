@@ -2,16 +2,44 @@ import React, { useEffect } from 'react'
 import UserLoadingSkeleton from './UserLoadingSkeleton';
 import { useChatStore } from '../store/useChatStore';
 import { useAuthStore } from '../store/useAuthStore';
+import useWindowSize from '../hooks/useWindowSize';
 
 const ContactList = () => {
   const { allcontacts, setSelectedUser, getAllContacts, isUsersLoading } = useChatStore();
   const { onlineUsers } = useAuthStore();
+  const { isTablet } = useWindowSize();
+
   useEffect(() => {
     getAllContacts();
   }, [getAllContacts])
 
   if (isUsersLoading) return <UserLoadingSkeleton />
 
+  // ─── TABLET: avatar-only list ─────────────────────────────────────────────
+  if (isTablet) {
+    return (
+      <div className='w-full h-full flex flex-col items-center gap-2 overflow-y-auto py-1'>
+        {allcontacts.map((contact) => (
+          <button
+            key={contact._id}
+            onClick={() => setSelectedUser(contact)}
+            title={contact.fullName}
+            className='relative flex-shrink-0'
+          >
+            <div className={`avatar ${onlineUsers.includes(contact._id) ? 'online' : ''} h-10 w-10 rounded-full`}>
+              <img
+                src={contact.profilepic || "/avatar.jpg"}
+                alt={contact.fullName}
+                className='w-10 h-10 rounded-full object-cover'
+              />
+            </div>
+          </button>
+        ))}
+      </div>
+    );
+  }
+
+  // ─── MOBILE & DESKTOP: original layout ────────────────────────────────────
   return (
     <div className='h-full w-full flex gap-3 text-white/70 flex-col'>
       {allcontacts.map((contact) => (
@@ -40,7 +68,7 @@ const ContactList = () => {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 export default ContactList

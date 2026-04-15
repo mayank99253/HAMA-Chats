@@ -1,19 +1,19 @@
 import React, { useEffect } from 'react'
-import { XCircleIcon, XIcon } from 'lucide-react'
+import { XCircleIcon, ArrowLeftIcon } from 'lucide-react'
 import { useChatStore } from '../store/useChatStore';
 import { useAuthStore } from '../store/useAuthStore';
+import useWindowSize from '../hooks/useWindowSize';
 
 const ChatHeader = () => {
     const { selectedUser, setSelectedUser } = useChatStore();
     const { onlineUsers } = useAuthStore();
+    const { isMobile } = useWindowSize();
 
     useEffect(() => {
         const handleEscapekey = (event) => {
             if (event.key === "Escape") setSelectedUser(null);
         }
         window.addEventListener('keydown', handleEscapekey);
-
-        // cleanup function to remove the event listener when the component unmounts or when selectedUser changes
         return () => {
             window.removeEventListener('keydown', handleEscapekey);
         };
@@ -33,18 +33,23 @@ const ChatHeader = () => {
 
                 <div className='flex flex-col'>
                     <span className='font-semibold'>{selectedUser?.fullName}</span>
-                    <span className={`text-sm ${onlineUsers.includes(selectedUser?._id) ? 'text-green-500' : 'text-gray-300/30'}`}>{onlineUsers.includes(selectedUser?._id) ? 'Online' : 'Offline'}</span>
+                    <span className={`text-sm ${onlineUsers.includes(selectedUser?._id) ? 'text-green-500' : 'text-gray-300/30'}`}>
+                        {onlineUsers.includes(selectedUser?._id) ? 'Online' : 'Offline'}
+                    </span>
                 </div>
             </div>
 
-            {/* RightSide */}
+            {/* RightSide — back arrow on mobile, X on desktop/tablet */}
             <button
                 type="button"
                 onClick={() => { setSelectedUser(null) }}
                 aria-label="Close conversation"
                 className='right cursor-pointer ml-10'
             >
-                <XCircleIcon size={30} aria-hidden="true" />
+                {isMobile
+                    ? <ArrowLeftIcon size={26} aria-hidden="true" />
+                    : <XCircleIcon size={30} aria-hidden="true" />
+                }
             </button>
         </div>
     )
