@@ -77,14 +77,14 @@ export const useChatStore = create((set, get) => ({
 
         try {
             const res = await axiosInstance.post(`/messages/send/${selectedUser._id}`, messageData);
-            // ✅ FIX 1: Use functional update to get fresh state, replace optimistic msg
+            // Use functional update to get fresh state, replace optimistic msg
             set((state) => ({
                 messages: state.messages
                     .filter((m) => m._id !== tempId)
                     .concat(res.data)
             }));
         } catch (error) {
-            // ✅ FIX 1: Remove only the failed optimistic message, keep rest intact
+            // Remove only the failed optimistic message, keep rest intact
             set((state) => ({
                 messages: state.messages.filter((m) => m._id !== tempId)
             }));
@@ -97,13 +97,12 @@ export const useChatStore = create((set, get) => ({
         if (!selectedUser) return;
 
         const socket = useAuthStore.getState().socket;
-        if (!socket) return; // ✅ guard against null socket
+        if (!socket) return; 
 
-        // ✅ FIX 2: Remove old listener before adding new one to prevent duplicates
         socket.off("newMessage");
 
         socket.on("newMessage", (newMessage) => {
-            // ✅ FIX 3: Using Sender consistently
+            
             const isMessageSentFromSelectedUser = newMessage.Sender === selectedUser._id;
             if (!isMessageSentFromSelectedUser) return;
 
