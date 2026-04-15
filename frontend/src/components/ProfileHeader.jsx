@@ -1,9 +1,11 @@
 import { LocateFixed, LogOut } from 'lucide-react'
 import React, { useRef, useState } from 'react'
 import { useAuthStore } from '../store/useAuthStore';
+import useWindowSize from '../hooks/useWindowSize';
 
 const ProfileHeader = () => {
     const { logout, authUser, updateProfilePicture } = useAuthStore();
+    const { isMobile, isTablet } = useWindowSize();
 
     const [selectedImg, setSelectedImg] = useState(null);
 
@@ -25,6 +27,47 @@ const ProfileHeader = () => {
         logout();
     };
 
+    // ─── MOBILE & TABLET: avatar only, centered, with logout below ────────────
+    if (isMobile || isTablet) {
+        return (
+            <div className='w-full flex flex-col items-center gap-2 py-2 border-b border-white/10'>
+                {/* Avatar */}
+                <div className='avatar online relative'>
+                    <button
+                        className='h-10 w-10 rounded-full border border-white/10 relative group'
+                        onClick={() => fileInputRef.current.click()}
+                    >
+                        <img
+                            src={selectedImg || authUser.profilepic || "/avatar.jpg"}
+                            alt=""
+                            className='h-10 w-10 rounded-full border border-white/10 object-cover'
+                        />
+                        <div className='absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 group-hover:opacity-100 rounded-full transition-all'>
+                            <span className='text-[9px] text-white'>Edit</span>
+                        </div>
+                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept='image/*'
+                        onChange={handleImageUpload}
+                        className='hidden'
+                    />
+                </div>
+
+                {/* Logout icon below avatar */}
+                <button
+                    className='text-white/50 hover:text-white/100 transition-colors'
+                    onClick={handleLogout}
+                    title="Logout"
+                >
+                    <LogOut size={14} />
+                </button>
+            </div>
+        );
+    }
+
+    // ─── DESKTOP: original layout, untouched ──────────────────────────────────
     return (
         <div className='h-16 w-full flex items-center gap-2 px-4 py-2 border-b border-white/10'>
             <div className='flex items-center gap-2 bg-white/10 rounded-full'>
@@ -62,7 +105,7 @@ const ProfileHeader = () => {
                 </button>
             </div>
         </div>
-    )
+    );
 }
 
-export default ProfileHeader
+export default ProfileHeader;

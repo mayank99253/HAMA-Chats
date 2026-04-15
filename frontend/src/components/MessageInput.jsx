@@ -2,10 +2,12 @@ import { Image, Send, XIcon } from 'lucide-react'
 import React, { useRef, useState } from 'react'
 import { useChatStore } from '../store/useChatStore';
 import toast from 'react-hot-toast';
+import useWindowSize from '../hooks/useWindowSize';
 
 const MessageInput = () => {
 
     const { sendMessage } = useChatStore();
+    const { isMobile } = useWindowSize();
 
     const [text, setText] = useState("");
     const [imagePreview, setImagePreview] = useState(null);
@@ -38,15 +40,15 @@ const MessageInput = () => {
     }
 
     return (
-        <div className='w-full border-t border-gray-300/20 p-4 flex flex-col gap-2'>  {/* ✅ no absolute, no fixed height */}
-            
+        <div className={`w-full border-t border-gray-300/20 flex flex-col gap-2 ${isMobile ? 'p-2' : 'p-4'}`}>
+
             {/* Image Preview */}
             {imagePreview && (
-                <div className="relative w-fit">  {/* ✅ no absolute */}
+                <div className="relative w-fit">
                     <img
                         src={imagePreview}
                         alt="Preview"
-                        className="w-20 h-20 object-cover rounded-lg border border-slate-700"
+                        className={`object-cover rounded-lg border border-slate-700 ${isMobile ? 'w-14 h-14' : 'w-20 h-20'}`}
                     />
                     <button
                         onClick={RemoveImagePreview}
@@ -60,7 +62,7 @@ const MessageInput = () => {
 
             {/* Input Row */}
             <form
-                className='w-full flex items-center gap-2'  
+                className='w-full flex items-center gap-2'
                 onSubmit={handleSendMessage}
             >
                 <input
@@ -68,7 +70,7 @@ const MessageInput = () => {
                     value={text}
                     onChange={(e) => setText(e.target.value)}
                     placeholder="Type your message..."
-                    className='flex-1 p-2 border border-gray-300/20 bg-gray-100/20 outline-none rounded-lg'
+                    className={`flex-1 border border-gray-300/20 bg-gray-100/20 outline-none rounded-lg ${isMobile ? 'p-1.5 text-sm' : 'p-2'}`}
                 />
 
                 <input
@@ -82,15 +84,15 @@ const MessageInput = () => {
                 <button
                     type='submit'
                     disabled={!text.trim() && !imagePreview}
-                    className='p-3 bg-blue-500/20 text-white rounded-lg'>
-                    <Send size={24} />
+                    className={`bg-blue-500/20 text-white rounded-lg ${isMobile ? 'p-2' : 'p-3'}`}>
+                    <Send size={isMobile ? 18 : 24} />
                 </button>
 
                 <button
                     type='button'
                     onClick={() => FileInputRef.current.click()}
-                    className='p-3 bg-blue-500/20 text-white rounded-lg'>
-                    <Image size={24} />
+                    className={`bg-blue-500/20 text-white rounded-lg ${isMobile ? 'p-2' : 'p-3'}`}>
+                    <Image size={isMobile ? 18 : 24} />
                 </button>
             </form>
 
