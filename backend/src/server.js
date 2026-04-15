@@ -18,7 +18,7 @@ const allowedOrigins = [
   ENV.CLIENT_URL,          // from .env
   'http://localhost:5173',   // your local frontend (Vite)
   'http://localhost:3000',   // or CRA
-  'https://your-frontend-domain.com'  // your deployed frontend URL
+  'https://hama-chats.vercel.app'  // your deployed frontend URL
 ];
 
 app.use(cors({
