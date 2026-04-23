@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { Link } from 'react-router-dom'
-import { User, Mail, Lock, ArrowRight, ShieldQuestion, KeyRound } from "lucide-react";
+import { User, Mail, Lock, ArrowRight, ShieldQuestion, KeyRound, Eye, EyeOff } from "lucide-react";
 import { useAuthStore } from "../store/useAuthStore";
 import AestheticBackground from "../theme/AestheticBackground";
-import {toast } from 'react-hot-toast'
+import { toast } from 'react-hot-toast'
 
 const Signup = () => {
+  const [showPassword, setShowPassword] = useState(false);
   // Added securityQuestion and securityAnswer to the state
   const [fromData, setFromData] = useState({
     fullName: "",
@@ -18,17 +19,49 @@ const Signup = () => {
   const { signup, isSigningUp } = useAuthStore()
   // --- NEW VALIDATION LOGIC ---
   const validateForm = () => {
-    const { password } = fromData;
+    const { fullName, email, password, securityQuestion, securityAnswer } = fromData;
 
-    // Regex for: 1 Uppercase, 1 Lowercase, 1 Number, 1 Special Char, Min 6 Length
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+    // Email Regex (simple + effective)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-    if (!passwordRegex.test(password)) {
-      toast.error("Password must contain uppercase, lowercase, number, and special character (@$!%*?&)");
+    // Password Regex
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{6,}$/;
+
+    // Full Name
+    if (!fullName.trim()) {
+      toast.error("Full name is required");
       return false;
     }
+
+    // Email Validation
+    if (!emailRegex.test(email)) {
+      toast.error("Invalid email format");
+      return false;
+    }
+
+    // Password Validation
+    if (!passwordRegex.test(password)) {
+      toast.error(
+        "Password must contain uppercase, lowercase, number, and special character (@$!%*?&)"
+      );
+      return false;
+    }
+
+    // Security Question
+    if (!securityQuestion) {
+      toast.error("Please select a security question");
+      return false;
+    }
+
+    // Security Answer
+    if (!securityAnswer.trim()) {
+      toast.error("Security answer is required");
+      return false;
+    }
+
     return true;
-  }
+  };
 
   function handleSubmit(e) {
     e.preventDefault();
@@ -47,18 +80,18 @@ const Signup = () => {
       <div className="z-10 h-[90vh] w-[90vw] max-w-6xl bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[2.5rem] flex overflow-hidden shadow-2xl">
 
         {/* Left Side: Signup Form */}
-       <div className="h-full w-full lg:w-[40%] flex flex-col justify-center px-8 md:px-16 border-r border-white/5 bg-black/20 overflow-y-auto">
-          <div className="mb-8 flex flex-col gap-1">
+        <div className="h-full w-full lg:w-[40%] flex flex-col justify-center px-8 py-8 md:py-10 md:px-16 border-r border-white/5 bg-black/20 overflow-y-auto">
+          <div className="mb-4 flex flex-col mt-10">
             <p className="text-white font-sans pl-1">Welcome to</p>
-            <h1 className="text-4xl font-bold text-white tracking-tight">
+            <h1 className="text-3xl font-bold text-white tracking-tight">
               HAMA <span className="text-blue-500">Chats</span>
             </h1>
-            <p className="text-gray-400 mt-2 text-sm leading-relaxed">
+            <p className="text-gray-400 text-sm leading-relaxed">
               Create a secure account to get started.
             </p>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <form onSubmit={handleSubmit} className="flex flex-col gap-3">
               {/* Full Name */}
               <div className="relative group">
@@ -88,15 +121,32 @@ const Signup = () => {
 
               {/* Password */}
               <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors" size={18} />
+                {/* Lock Icon */}
+                <Lock
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-blue-500 transition-colors"
+                  size={18}
+                />
+
+                {/* Input */}
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   placeholder="Password (e.g. Password@123)"
                   required
                   value={fromData.password}
-                  onChange={(e) => { setFromData({ ...fromData, password: e.target.value }) }}
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 text-white outline-none focus:border-blue-500/50 focus:bg-white/[0.08] transition-all"
+                  onChange={(e) =>
+                    setFromData({ ...fromData, password: e.target.value })
+                  }
+                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-12 text-white outline-none focus:border-blue-500/50 focus:bg-white/[0.08] transition-all"
                 />
+
+                {/* Eye Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-blue-500 transition-colors"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
 
               <div className="w-full h-[1px] bg-white/5 my-2" />
@@ -131,8 +181,8 @@ const Signup = () => {
                 />
               </div>
 
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isSigningUp}
                 className="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-4 rounded-2xl shadow-lg shadow-blue-600/20 transition-all flex items-center justify-center gap-2 group mt-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
