@@ -4,13 +4,18 @@ import { toast } from "react-hot-toast"
 import { io } from "socket.io-client";
 
 // const BASE_URL = import.meta.env.MODE === 'development' ? 'http://localhost:5000' : '/'
-const BASE_URL = 'https://hama-chats-1.onrender.com'
+// const BASE_URL = 'https://hama-chats-1.onrender.com'
 
-export const useAuthStore = create((set , get) => ({
+const BASE_URL = 'http://localhost:5000'
+
+export const useAuthStore = create((set, get) => ({
     authUser: null,
     isCheckingAuth: true,
     isSigningUp: false,
     isLogin: false,
+    isUpdatingProfile: false, // Added for UI loading states
+    isResettingPassword: false,
+    
 
     socket: null,
     onlineUsers: [],
@@ -81,6 +86,77 @@ export const useAuthStore = create((set , get) => ({
             console.error("Error updating profile picture:", error);
         }
     },
+
+    // ─── NEW ACTIONS FOR SECURITY & PASSWORD ───
+
+    // Add this inside your useAuthStore create block
+    updateUserDetails: async (data) => {
+        set({ isUpdatingProfile: true });
+        try {
+            const res = await axiosInstance.put('/auth/update-details', data);
+            // We use res.data.user because that is what the controller sends back
+            set({ authUser: res.data.user });
+            toast.success("Profile updated successfully");
+            return true;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to update profile");
+            return false;
+        } finally {
+            set({ isUpdatingProfile: false });
+        }
+    },
+    getSecurityQuestion: async (email) => {
+        try {
+            const res = await axiosInstance.post("/auth/get-security-question", { email });
+            return res.data.securityQuestion;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "User not found");
+            return null;
+        }
+    },
+
+    verifySecurityAnswer: async (data) => {
+        try {
+            const res = await axiosInstance.post("/auth/verify-security-answer", data);
+            toast.success("Answer Verified");
+            return res.data.userId; // Return userId for the next step (reset)
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Verification Failed");
+            return null;
+        }
+    },
+
+    resetPassword: async (data) => {
+        set({ isResettingPassword: true });
+        try {
+            await axiosInstance.post("/auth/reset-password", data);
+            toast.success("Password reset successfully! You can now login.");
+            return true;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Failed to reset password");
+            return false;
+        } finally {
+            set({ isResettingPassword: false });
+        }
+    },
+
+    // useAuthStore.js
+    changePassword: async (passwordData) => {
+        set({ isUpdatingProfile: true }); // ADD THIS
+        try {
+            const res = await axiosInstance.put("/auth/change-password", passwordData);
+            toast.success("Password changed successfully!");
+            return true;
+        } catch (error) {
+            const message = error.response?.data?.message || "Failed to change password";
+            toast.error(message);
+            console.error("Change Password Error:", error);
+            return false;
+        } finally {
+            set({ isUpdatingProfile: false }); // ADD THIS
+        }
+    },
+
     connectSocket: () => {
         const { authUser } = get();
         if (!authUser || get().socket?.connected) return;
@@ -103,5 +179,7 @@ export const useAuthStore = create((set , get) => ({
 
     disconnectSocket: () => {
         if (get().socket?.connected) get().socket.disconnect();
-    }
+    },
+
+
 }))

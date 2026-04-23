@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/useAuthStore';
 import useWindowSize from '../hooks/useWindowSize';
 
 const ChatHeader = () => {
-    const { selectedUser, setSelectedUser } = useChatStore();
+    const { selectedUser, setSelectedUser , setShowReceiverProfile } = useChatStore();
     const { onlineUsers } = useAuthStore();
     const { isMobile } = useWindowSize();
 
@@ -22,7 +22,8 @@ const ChatHeader = () => {
     return (
         <div className='w-full h-16 border-b border-gray-300/20 flex items-center justify-between px-4'>
             {/* LeftSide */}
-            <div className='left flex items-center gap-4'>
+            <div className='left flex items-center gap-4 cursor-pointer'
+            onClick={() => setShowReceiverProfile(true)} >
 
                 <div className={`avatar ${onlineUsers.includes(selectedUser?._id) ? 'online' : ''} w-10 h-10 rounded-full`}>
                     <img

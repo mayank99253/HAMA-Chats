@@ -19,7 +19,11 @@ const ContactList = () => {
   if (isTablet) {
     return (
       <div className='w-full h-full flex flex-col items-center gap-2 overflow-y-auto py-1'>
-        {allcontacts.map((contact) => (
+        {[...allcontacts].reverse().sort((a, b) => {
+          const aOnline = onlineUsers.includes(a._id) ? 1 : 0;
+          const bOnline = onlineUsers.includes(b._id) ? 1 : 0;
+          return bOnline - aOnline;
+        }).map((contact) => (
           <button
             key={contact._id}
             onClick={() => setSelectedUser(contact)}
@@ -42,14 +46,18 @@ const ContactList = () => {
   // ─── MOBILE & DESKTOP: original layout ────────────────────────────────────
   return (
     <div className='h-full w-full flex gap-3 text-white/70 flex-col'>
-      {allcontacts.map((contact) => (
+      {[...allcontacts].reverse().sort((a, b) => {
+        const aOnline = onlineUsers.includes(a._id) ? 1 : 0;
+        const bOnline = onlineUsers.includes(b._id) ? 1 : 0;
+        return bOnline - aOnline;
+      }).map((contact) => (
         <div
           key={contact._id}
           className='px-3 py-2 flex gap-2 rounded-lg bg-blue-900/20 hover:bg-blue-900/30 cursor-pointer'
           onClick={() => setSelectedUser(contact)}
         >
           {contact.profilepic ? (
-            <div className='avatar online h-10 w-10 rounded-full'>
+            <div className={`avatar ${onlineUsers.includes(contact._id) ? 'online' : ''} h-10 w-10 rounded-full`}>
               <img
                 src={contact.profilepic}
                 alt={contact.fullName}
@@ -62,7 +70,11 @@ const ContactList = () => {
             </div>
           )}
           <div className='flex flex-col'>
-            <span>{contact.fullName}</span>
+            <span>
+              {contact.fullName.length > 9
+                ? contact.fullName.slice(0, 6) + "..."
+                : contact.fullName}
+            </span>
             <span className={`text-sm ${onlineUsers.includes(contact._id) ? 'text-green-500' : 'text-gray-300/30'}`}>{onlineUsers.includes(contact._id) ? 'Online' : 'Offline'}</span>
           </div>
         </div>

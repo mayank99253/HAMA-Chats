@@ -8,6 +8,7 @@ import ContactList from '../components/ContactList';
 import ChatContainer from '../components/ChatContainer';
 import NoChatConversation from '../components/NoChatConversation';
 import useWindowSize from '../hooks/useWindowSize';
+import ReceiverProfileDrawer from '../components/ReceiverProfileDrawer';
 
 const Chatpage = () => {
 
@@ -21,6 +22,7 @@ const Chatpage = () => {
       <div className='h-screen w-screen flex items-center justify-center font-sans overflow-hidden'>
         <AestheticBackground />
         <div className='h-screen w-screen bg-white/[0.01] backdrop-blur-3xl flex overflow-hidden z-10'>
+          <ReceiverProfileDrawer />
           {selectedUser ? (
             <div className='w-full h-full'>
               <ChatContainer />
@@ -46,7 +48,7 @@ const Chatpage = () => {
       <div className='h-screen w-screen flex items-center justify-center font-sans overflow-hidden'>
         <AestheticBackground />
         <div className='h-screen w-screen bg-white/[0.01] backdrop-blur-3xl border border-white/10 flex overflow-hidden z-10'>
-
+          <ReceiverProfileDrawer />
           {/* Narrow Sidebar */}
           <div className='w-16 h-full border-r border-white/10 flex flex-col items-center py-3 gap-4 overflow-hidden'>
             <ProfileHeader />
@@ -71,6 +73,7 @@ const Chatpage = () => {
     <div className='h-screen w-screen flex items-center justify-center font-sans overflow-hidden'>
       <AestheticBackground />
       <div className='h-[90vh] w-[65vw] max-w-7xl bg-white/[0.01] backdrop-blur-3xl border border-white/10 rounded-lg flex overflow-hidden shadow-[0_0_100px_rgba(0,0,0,0.8)] z-10'>
+      <ReceiverProfileDrawer />
         <div className='w-1/4 border-r border-white/10'>
           {/* Sidebar */}
           <div className='h-full w-full flex flex-col items-center justify-start gap-4 p-4'>

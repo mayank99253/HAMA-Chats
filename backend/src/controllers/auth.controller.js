@@ -5,54 +5,53 @@ import cloudinary from "../lib/cloudinary.js";
 import bcrypt from "bcryptjs"
 
 export const signup = async (req, res) => {
-    const { email, fullName, password } = req.body;
+    const { email, fullName, password, securityQuestion, securityAnswer } = req.body;
 
     try {
-
-        if (!email || !fullName || !password) {
-            return res.status(400).json({ message: "All Fields are Required" })
+        if (!email || !fullName || !password || !securityQuestion || !securityAnswer) {
+            return res.status(400).json({ message: "All fields including security question are required" });
         }
 
         if (password.length < 6) {
-            return res.status(400).json({ message: "Password is Too Small" });
+            return res.status(400).json({ message: "Password is too small" });
         }
 
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/; ///^[^\;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
-            return res.status(400).json({ message: "Invalid Email Format" })
+            return res.status(400).json({ message: "Invalid email format" });
         }
 
-        const user = await User.findOne({ email });
-        if (user) return res.status(400).json({ message: "Email Already Exists" })
+        const existing = await User.findOne({ email });
+        if (existing) return res.status(400).json({ message: "Email already exists" });
 
         const salt = await bcrypt.genSalt(10);
-        const HashPassword = await bcrypt.hash(password, salt)
+        const hashPassword = await bcrypt.hash(password, salt);
+        const hashAnswer = await bcrypt.hash(securityAnswer.trim().toLowerCase(), salt);
 
         const newUser = new User({
             fullName,
             email,
-            password: HashPassword
-        })
+            password: hashPassword,
+            securityQuestion,
+            securityAnswerHash: hashAnswer,
+        });
 
-        if (newUser) {
-            await newUser.save();
-            await generateToken(newUser._id, res);
+        await newUser.save();
+        await generateToken(newUser._id, res);
 
-            return res.status(201).json({
-                _id: newUser._id,
-                email: newUser.email,
-                fullName: newUser.fullName,
-                profilepic: newUser.profilepic
-            });
-        } else {
-            res.status(400).json({ message: "Invalid User Data" })
-        }
+        return res.status(201).json({
+            _id: newUser._id,
+            email: newUser.email,
+            fullName: newUser.fullName,
+            profilepic: newUser.profilepic,
+        });
 
     } catch (error) {
-        console.error("Error in Sign Up Controller", error);
-        return res.status(500).json({ message: "Internal Server Error" })
+        console.error("Error in Signup Controller", error);
+        return res.status(500).json({ message: "Internal server error" });
     }
-}
+};
+
 export const login = async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -101,3 +100,147 @@ export const updateProfile = async (req, res, next) => {
         res.status(500).json({ message: "Internal server error" })
     }
 }
+
+export const verifySecurityAnswer = async (req, res) => {
+    const { email, securityAnswer } = req.body;
+    try {
+        if (!email || !securityAnswer) {
+            return res.status(400).json({ message: "Email and answer are required" });
+        }
+
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (!user.securityAnswerHash) {
+            return res.status(400).json({ message: "No security question set for this account" });
+        }
+
+        const isCorrect = await bcrypt.compare(
+            securityAnswer.trim().toLowerCase(),
+            user.securityAnswerHash
+        );
+
+        if (!isCorrect) {
+            return res.status(400).json({ message: "Incorrect answer" });
+        }
+
+        // Return a temporary token to authorize the password reset
+        return res.status(200).json({ message: "Answer verified", userId: user._id });
+
+    } catch (error) {
+        console.error("Error in verifySecurityAnswer", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+export const resetPassword = async (req, res) => {
+    const { userId, newPassword, confirmPassword } = req.body;
+    try {
+        if (!userId || !newPassword || !confirmPassword) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ message: "Passwords do not match" });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: "Password must be at least 6 characters" });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        return res.status(200).json({ message: "Password reset successfully" });
+
+    } catch (error) {
+        console.error("Error in resetPassword", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+// ─── NEW: Change password (logged in user) ───────────────────────────────────
+export const changePassword = async (req, res) => {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    try {
+        if (!oldPassword || !newPassword || !confirmPassword) {
+            return res.status(400).json({ message: "All fields are required" });
+        }
+
+        if (newPassword !== confirmPassword) {
+            return res.status(400).json({ message: "Passwords do not match" });
+        }
+
+        if (newPassword.length < 6) {
+            return res.status(400).json({ message: "Password must be at least 6 characters" });
+        }
+
+        const user = await User.findById(req.user._id);
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+        if (!isMatch) return res.status(400).json({ message: "Old password is incorrect" });
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(newPassword, salt);
+        await user.save();
+
+        return res.status(200).json({ message: "Password changed successfully" });
+
+    } catch (error) {
+        console.error("Error in changePassword", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+};
+
+// ─── NEW: Get security question for a given email ────────────────────────────
+export const getSecurityQuestion = async (req, res) => {
+    const { email } = req.body;
+    try {
+        if (!email) return res.status(400).json({ message: "Email is required" });
+
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        return res.status(200).json({ securityQuestion: user.securityQuestion });
+    } catch (error) {
+        console.error("Error in getSecurityQuestion", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+// ─── NEW: Update User Details (Name & Email) ──────────────────────────────────
+export const updateDetails = async (req, res) => {
+    try {
+        const { fullName, email ,  bio, profession } = req.body;
+        const userId = req.user._id;
+
+        if (!fullName || !email) {
+            return res.status(400).json({ message: "Full name and email are required" });
+        }
+
+        // Check if the new email is already taken by another user
+        const existingUser = await User.findOne({ email });
+        if (existingUser && existingUser._id.toString() !== userId.toString()) {
+            return res.status(400).json({ message: "Email is already in use by another account" });
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+            userId,
+            { fullName, email, bio, profession },
+            { new: true } // Returns the updated document
+        ).select("-password -securityAnswerHash"); // Hide sensitive data
+
+        res.status(200).json({ 
+            message: "Profile updated successfully", 
+            user: updatedUser 
+        });
+
+    } catch (error) {
+        console.error("Error in updateDetails controller:", error.message);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+

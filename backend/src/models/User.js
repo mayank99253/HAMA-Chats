@@ -18,10 +18,20 @@ const userSchema = new mongoose.Schema({
     profilepic: {
         type: String,
         default: "",
-    }
-}, { timestamps: true }
-);
+    },
+    securityQuestion: {
+        type: String,
+        required: false,
+        default: "",
+    },
+    securityAnswerHash: {
+        type: String,
+        required: false,
+        default: "",
+    },
+    bio: { type: String, default: "Hey there! I am using this app." },
+    profession: { type: String, default: "Not specified" }
+}, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);
-
 export default User;

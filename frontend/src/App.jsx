@@ -1,17 +1,22 @@
 import React, { useEffect } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
-import NeonChatBackground from './theme/NeonChatBackground'
 import Chatpage from './pages/Chatpage'
 import Login from './pages/Login'
 import Signup from './pages/Signup'
 import { useAuthStore } from './store/useAuthStore'
 import PageLoader from './loader/PageLoader'
-import HamaPageLoader from './loader/HamaPageLoader'
 import { Toaster } from 'react-hot-toast'
-import MouseFolloower from './components/MouseFolloower'
+import { useChatStore } from './store/useChatStore'
 
 const App = () => {
-  const { checkAuth, authUser, isCheckingAuth } = useAuthStore()
+  const { checkAuth, authUser, isCheckingAuth ,socket  } = useAuthStore()
+  const { unsubscribeFromMessages, subscribeToMessages } = useChatStore()
+
+  useEffect(() => {
+    if (!socket) return;
+    subscribeToMessages();
+    return () => unsubscribeFromMessages();
+  }, [socket]);
 
   useEffect(() => {
     checkAuth()
@@ -41,7 +46,7 @@ const App = () => {
         <Route path='*' element={<Navigate to="/" replace />} />
 
         {/* <Route path='/loader' element={<HamaPageLoader/>} /> */}
-{/* 
+        {/* 
         <Route path='/follower' element={<MouseFolloower/>} /> */}
       </Routes>
 

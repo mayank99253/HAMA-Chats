@@ -13,6 +13,10 @@ export const useChatStore = create((set, get) => ({
     isUsersLoading: false,
     isMessagesLoading: false,
 
+    unreadMessages: {},
+    showReceiverProfile: false,
+
+    setShowReceiverProfile: async (val) => set({ showReceiverProfile: val }),
     setActiveTab: (tab) => { set({ ActiveTab: tab }) },
     setSelectedUser: (user) => { set({ selectedUser: user }) },
 
@@ -92,19 +96,34 @@ export const useChatStore = create((set, get) => ({
         }
     },
 
+    clearUnread: (userId) => {
+        set((state) => {
+            const updated = { ...state.unreadMessages };
+            delete updated[userId];
+            return { unreadMessages: updated };
+        });
+    },
+    
     subscribeToMessages: () => {
-        const { selectedUser } = get();
-        if (!selectedUser) return;
-
         const socket = useAuthStore.getState().socket;
-        if (!socket) return; 
+        if (!socket) return;
 
         socket.off("newMessage");
 
         socket.on("newMessage", (newMessage) => {
-            
-            const isMessageSentFromSelectedUser = newMessage.Sender === selectedUser._id;
-            if (!isMessageSentFromSelectedUser) return;
+            const { selectedUser } = get();
+            const isMessageSentFromSelectedUser = newMessage.Sender === selectedUser?._id;
+
+            if (!isMessageSentFromSelectedUser) {
+                set((state) => ({
+                    unreadMessages: { ...state.unreadMessages, [newMessage.Sender]: true },
+                    chats: [
+                        { ...state.chats.find(c => c._id === newMessage.Sender) },
+                        ...state.chats.filter(c => c._id !== newMessage.Sender)
+                    ]
+                }));
+                return;
+            }
 
             set((state) => ({ messages: [...state.messages, newMessage] }));
         });
