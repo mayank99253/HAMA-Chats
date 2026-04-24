@@ -9,7 +9,9 @@ import {
      verifySecurityAnswer,
      resetPassword,
      changePassword,
-     updateDetails
+     updateDetails,
+     getBlockedUsers,
+     blockUser
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 import { arcjetProtection } from "../middleware/arcjet.middleware.js";
@@ -17,6 +19,9 @@ import { arcjetProtection } from "../middleware/arcjet.middleware.js";
 const router = express.Router()
 
 router.use(arcjetProtection)
+
+router.put("/block/:id", protectRoute, blockUser);
+router.get("/blocked-users", protectRoute, getBlockedUsers);
 
 router.get('/test', (req, res) => { res.json({ mesage: "test success" }) })
 router.post("/signup", signup);

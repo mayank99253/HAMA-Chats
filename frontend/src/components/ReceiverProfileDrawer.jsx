@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react';
-import { X , Calendar, User, MessageSquare, Briefcase } from 'lucide-react';
+import { X, Calendar, User, MessageSquare, Briefcase, Shield, ShieldOff } from 'lucide-react';
 import { useChatStore } from '../store/useChatStore';
 import { useAuthStore } from '../store/useAuthStore';
 import { axiosInstance } from '../lib/axios'; // your axios instance
 
 const ReceiverProfileDrawer = () => {
     const { selectedUser, showReceiverProfile, setShowReceiverProfile } = useChatStore();
-    const { onlineUsers } = useAuthStore();
+    const { onlineUsers, blockedUsers, toggleBlockUser, fetchBlockedUsers } = useAuthStore();
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [isBlocking, setIsBlocking] = useState(false);
 
     useEffect(() => {
         if (!showReceiverProfile || !selectedUser?._id) return;
@@ -26,6 +27,7 @@ const ReceiverProfileDrawer = () => {
         };
 
         fetchProfile();
+        fetchBlockedUsers();
     }, [showReceiverProfile, selectedUser]);
 
     if (!showReceiverProfile) return null;
@@ -111,6 +113,28 @@ const ReceiverProfileDrawer = () => {
                                     </p>
                                 </div>
                             </div>
+                            {/* Block / Unblock Button */}
+                            <button
+                                onClick={async () => {
+                                    setIsBlocking(true);
+                                    await toggleBlockUser(selectedUser._id);
+                                    setIsBlocking(false);
+                                }}
+                                disabled={isBlocking}
+                                className={`w-full mt-4 flex items-center justify-center gap-2 py-3 rounded-lg font-semibold text-sm transition-all
+        ${blockedUsers.includes(selectedUser?._id)
+                                        ? "bg-green-600/20 text-green-400 hover:bg-green-600/30"
+                                        : "bg-red-600/20 text-red-400 hover:bg-red-600/30"
+                                    }`}
+                            >
+                                {isBlocking ? (
+                                    <span className="loading loading-spinner loading-xs" />
+                                ) : blockedUsers.includes(selectedUser?._id) ? (
+                                    <><ShieldOff size={16} /> Unblock User</>
+                                ) : (
+                                    <><Shield size={16} /> Block User</>
+                                )}
+                            </button>
                         </div>
                     </div>
                 )}

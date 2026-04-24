@@ -15,10 +15,11 @@ export const useAuthStore = create((set, get) => ({
     isLogin: false,
     isUpdatingProfile: false, // Added for UI loading states
     isResettingPassword: false,
-    
+
 
     socket: null,
     onlineUsers: [],
+    blockedUsers: [],
 
 
     checkAuth: async () => {
@@ -175,6 +176,44 @@ export const useAuthStore = create((set, get) => ({
             set({ onlineUsers: userIds });
         });
 
+        socket.on("blockedByUser", ({ blockerId }) => {
+            // Jis user ne block kiya, wo hamesha offline dikhe
+            set((state) => ({
+                onlineUsers: state.onlineUsers.filter((id) => id !== blockerId),
+            }));
+        });
+
+    },
+
+    fetchBlockedUsers: async () => {
+        try {
+            const res = await axiosInstance.get("/auth/blocked-users");
+            set({ blockedUsers: res.data.blockedUsers });
+        } catch (error) {
+            console.error("Error fetching blocked users", error);
+        }
+    },
+
+    toggleBlockUser: async (targetId) => {
+        try {
+            const res = await axiosInstance.put(`/auth/block/${targetId}`);
+            const isNowBlocked = res.data.blocked;
+
+            set((state) => ({
+                blockedUsers: isNowBlocked
+                    ? [...state.blockedUsers, targetId]
+                    : state.blockedUsers.filter((id) => id !== targetId),
+                // Block kiya to online list se hata do
+                onlineUsers: isNowBlocked
+                    ? state.onlineUsers.filter((id) => id !== targetId)
+                    : state.onlineUsers,
+            }));
+
+            toast.success(res.data.message);
+            return isNowBlocked;
+        } catch (error) {
+            toast.error(error.response?.data?.message || "Something went wrong");
+        }
     },
 
     disconnectSocket: () => {

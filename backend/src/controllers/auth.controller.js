@@ -244,3 +244,45 @@ export const updateDetails = async (req, res) => {
     }
 };
 
+export const blockUser = async (req, res) => {
+    try {
+        const myId = req.user._id;
+        const { id: targetId } = req.params;
+
+        if (myId.toString() === targetId) {
+            return res.status(400).json({ message: "You cannot block yourself" });
+        }
+
+        const me = await User.findById(myId);
+
+        const alreadyBlocked = me.blockedUsers.includes(targetId);
+
+        if (alreadyBlocked) {
+            // Unblock
+            me.blockedUsers = me.blockedUsers.filter(
+                (id) => id.toString() !== targetId
+            );
+            await me.save();
+            return res.status(200).json({ message: "User unblocked", blocked: false });
+        } else {
+            // Block
+            me.blockedUsers.push(targetId);
+            await me.save();
+            return res.status(200).json({ message: "User blocked", blocked: true });
+        }
+    } catch (error) {
+        console.error("Error in blockUser", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
+export const getBlockedUsers = async (req, res) => {
+    try {
+        const me = await User.findById(req.user._id).select("blockedUsers");
+        res.status(200).json({ blockedUsers: me.blockedUsers });
+    } catch (error) {
+        console.error("Error in getBlockedUsers", error);
+        res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+
