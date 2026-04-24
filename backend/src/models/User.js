@@ -29,8 +29,19 @@ const userSchema = new mongoose.Schema({
         required: false,
         default: "",
     },
-    bio: { type: String, default: "Hey there! I am using this app." },
-    profession: { type: String, default: "Not specified" }
+    bio: {
+        type: String,
+        default: "Hey there! I am using this app."
+    },
+    profession: {
+        type: String,
+        default: "Not specified"
+    },
+    blockedUsers: {
+        type: [mongoose.Schema.Types.ObjectId],
+        ref: "User",
+        default: [],
+    }
 }, { timestamps: true });
 
 const User = mongoose.model("User", userSchema);

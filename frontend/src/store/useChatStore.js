@@ -16,7 +16,9 @@ export const useChatStore = create((set, get) => ({
     unreadMessages: {},
     showReceiverProfile: false,
 
+    selectedMessage: null,
     setShowReceiverProfile: async (val) => set({ showReceiverProfile: val }),
+    setSelectedMessage: (msg) => set({ selectedMessage: msg }),
     setActiveTab: (tab) => { set({ ActiveTab: tab }) },
     setSelectedUser: (user) => { set({ selectedUser: user }) },
 
@@ -103,12 +105,65 @@ export const useChatStore = create((set, get) => ({
             return { unreadMessages: updated };
         });
     },
-    
+    // ✅ FEATURE 1: Mark messages as seen via Socket
+    // Jab user kisi ka chat open kare - ye call karo
+    markAsSeen: (senderId) => {
+        const socket = useAuthStore.getState().socket;
+        if (!socket || !senderId) return;
+
+        // Socket se server ko batao - server DB update karega + sender ko notify karega
+        socket.emit("markAsSeen", { senderId });
+
+        // Local state bhi update karo - jo messages aye hain unhe seen dikhao
+        set((state) => ({
+            messages: state.messages.map((msg) =>
+                msg.Sender === senderId && !msg.seen
+                    ? { ...msg, seen: true, seenAt: new Date().toISOString() }
+                    : msg
+            )
+        }));
+    },
+
+    deleteMessage: (messageId, reason) => {
+        const socket = useAuthStore.getState().socket;
+        if (socket) {
+            socket.emit("deleteMessage", { messageId, reason });
+        }
+        // Local state mein turant soft delete karo
+        set((state) => ({
+            messages: state.messages.map((msg) =>
+                msg._id === messageId
+                    ? { ...msg, isDeleted: true, text: null, image: null, deleteReason: reason || null }
+                    : msg
+            )
+        }));
+    },
+
+    editMessage: async (messageId, newText) => {
+        const socket = useAuthStore.getState().socket;
+        // Socket se send karo (fast)
+        if (socket) {
+            socket.emit("editMessage", { messageId, text: newText });
+        }
+        // Local state update karo turant
+        set((state) => ({
+            messages: state.messages.map((msg) =>
+                msg._id === messageId
+                    ? { ...msg, text: newText, isEdited: true, editedAt: new Date().toISOString() }
+                    : msg
+            )
+        }));
+    },
+
     subscribeToMessages: () => {
         const socket = useAuthStore.getState().socket;
         if (!socket) return;
 
         socket.off("newMessage");
+        socket.off("messagesSeen"); // ✅ Pehle clean karo
+        socket.off("messageEdited");
+        socket.off("userBlocked");
+        socket.off("messageDeleted");
 
         socket.on("newMessage", (newMessage) => {
             const { selectedUser } = get();
@@ -126,12 +181,74 @@ export const useChatStore = create((set, get) => ({
             }
 
             set((state) => ({ messages: [...state.messages, newMessage] }));
+
+            // ✅ FEATURE 1: Jab message aaye aur chat open ho - turant seen mark karo
+            const { selectedUser: currentSelectedUser } = get();
+            if (currentSelectedUser?._id === newMessage.Sender) {
+                get().markAsSeen(newMessage.Sender);
+            }
         });
+
+        // ✅ FEATURE 1: Sender side - jab receiver dekhe to apne messages update karo
+        socket.on("messagesSeen", ({ by, seenAt }) => {
+            const { selectedUser } = get();
+
+            // Agar jo message dekha wo same selected user ne dekha
+            if (selectedUser?._id === by) {
+                set((state) => ({
+                    messages: state.messages.map((msg) => {
+                        const { authUser } = useAuthStore.getState();
+                        // Sirf apne bheje hue messages update karo
+                        if (msg.Sender === authUser._id && !msg.seen) {
+                            return { ...msg, seen: true, seenAt };
+                        }
+                        return msg;
+                    })
+                }));
+            }
+        });
+
+        socket.on("messageEdited", (updatedMessage) => {
+            set((state) => ({
+                messages: state.messages.map((msg) =>
+                    msg._id === updatedMessage._id ? updatedMessage : msg
+                )
+            }));
+        });
+        socket.on("messageDeleted", ({ messageId, reason }) => {
+            set((state) => ({
+                messages: state.messages.map((msg) =>
+                    msg._id === messageId
+                        ? { ...msg, isDeleted: true, text: null, image: null, deleteReason: reason }
+                        : msg
+                )
+            }));
+
+            // ✅ Idea 1 — 5 seconds baad placeholder bhi hatao (receiver side)
+            setTimeout(() => {
+                set((state) => ({
+                    messages: state.messages.filter((msg) => msg._id !== messageId)
+                }));
+            }, 5000);
+        });
+        socket.on("userBlocked", ({ blockedBy }) => {
+            const { selectedUser } = get();
+            // Agar jis user se chat chal rahi hai usne block kiya
+            if (selectedUser?._id === blockedBy) {
+                toast.error("You have been blocked by this user");
+            }
+        });
+
     },
 
     unsubscribeFromMessages: () => {
         const socket = useAuthStore.getState().socket;
         if (!socket) return;
         socket.off("newMessage");
+        socket.off("messagesSeen"); // ✅ Clean up
+        socket.off("messageEdited");
+        socket.off("userBlocked");
+        socket.off("messageDeleted");
     },
+
 }))

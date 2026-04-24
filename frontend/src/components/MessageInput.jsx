@@ -1,12 +1,16 @@
-import { Image, Send, XIcon } from 'lucide-react'
+import { Image, Send, Shield, XIcon } from 'lucide-react'
 import React, { useRef, useState } from 'react'
 import { useChatStore } from '../store/useChatStore';
 import toast from 'react-hot-toast';
 import useWindowSize from '../hooks/useWindowSize';
+import { useAuthStore } from '../store/useAuthStore';
 
 const MessageInput = () => {
 
     const { sendMessage } = useChatStore();
+    const { blockedUsers } = useAuthStore();
+    const { selectedUser } = useChatStore();
+    const isBlocked = blockedUsers.includes(selectedUser?._id);
     const { isMobile } = useWindowSize();
 
     const [text, setText] = useState("");
@@ -39,6 +43,17 @@ const MessageInput = () => {
         if (FileInputRef.current) FileInputRef.current.value = "";
     }
 
+    if (isBlocked) {
+        return (
+            <div className="w-full p-4 border-t border-gray-300/20 flex items-center justify-center">
+                <p className="text-red-400 text-sm flex items-center gap-2">
+                    <Shield size={16} />
+                    You have blocked this user. Unblock to send messages.
+                </p>
+            </div>
+        );
+    }
+    
     return (
         <div className={`w-full border-t border-gray-300/20 flex flex-col gap-2 ${isMobile ? 'p-2' : 'p-4'}`}>
 
